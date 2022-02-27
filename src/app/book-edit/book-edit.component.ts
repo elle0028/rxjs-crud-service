@@ -20,8 +20,7 @@ export class BookEditComponent implements OnInit {
   }
 
   chooseBook() {
-    const id = Math.ceil(Math.random() * allBooks.length);
-    this.bookService.setCurrentBook(id);
+    this.bookService.setRandomBook();
   }
 
   updateBook(currentBook: Book) {

@@ -23,7 +23,7 @@ export class BookApiService {
 
   getBookById(id: number): Observable<BookApiModel> {
     return timer(delayTime()).pipe(
-      tap(() => console.log('Get ', id, allBooks)),
+      tap(() => console.log('Get ', id)),
       map((x) => allBooks.find((book) => book.id === id))
     );
   }
@@ -70,5 +70,9 @@ export class BookApiService {
         allBooks.splice(bookIdx, 1);
       })
     );
+  }
+
+  randomBookId(): number {
+    return Math.ceil(Math.random() * allBooks.length);
   }
 }

@@ -17,7 +17,7 @@ export class BookService {
   // actions
   private currentBookId$ = new Subject<number>();
   // Update
-  private updateBook$ = new Subject<Book>();
+  private upsertBook$ = new Subject<Book>();
   // delete
 
   constructor(private bookApi: BookApiService) {
@@ -25,35 +25,36 @@ export class BookService {
       .getAllBooks()
       .pipe(map((allBooks) => allBooks.map(this.convertBook)));
 
+    const upsertStream$ = this.upsertBook$.pipe(
+      mergeMap((book) => {
+        if (book.id === -1) {
+          return this.bookApi.createBook(book);
+        }
+        return this.updateAndGetId(book);
+      }),
+      mergeMap(id => this.getAndConvertBookById(id))
+    );
+
+    const newOrGetByIdStream$ = this.currentBookId$.pipe(
+      mergeMap((id) => {
+        if (id === -1) {
+          return of(this.getBlankBook())
+        }
+        return this.getAndConvertBookById(id);
+      }),
+    );
+
     this.currentBook$ = merge(
-      this.updateBook$.pipe(
-        mergeMap((book) => {
-          if (book.id === -1) {
-            return this.bookApi.createBook(book);
-          }
-          return this.updateAndGetId(book);
-        }),
-        mergeMap((id) => this.bookApi.getBookById(id)),
-        map(this.convertBook)
-      ),
-      this.currentBookId$.pipe(
-        mergeMap((id) => {
-          if (id === -1) {
-            return of({
-              id: -1,
-              authorId: -1,
-              name: '',
-              description: '',
-            } as BookApiModel);
-          }
-          return this.bookApi.getBookById(id);
-        }),
-        map(this.convertBook)
-      )
+      upsertStream$,
+      newOrGetByIdStream$
     ).pipe(
       tap((book) => console.log('Current', book)),
       shareReplay(1)
     );
+  }
+
+  public setRandomBook() {
+    this.setCurrentBook(this.bookApi.randomBookId());
   }
 
   public setCurrentBook(id: number) {
@@ -61,15 +62,30 @@ export class BookService {
   }
 
   public updateCurrentBook(newBook: Book) {
-    this.updateBook$.next(newBook);
+    this.upsertBook$.next(newBook);
   }
 
   public createCurrentBook(newBook: Book) {
-    this.updateBook$.next(newBook);
+    this.upsertBook$.next(newBook);
+  }
+
+  private getBlankBook(): Book {
+    return {
+      id: -1,
+      authorId: -1,
+      name: '',
+      description: '',
+    };
   }
 
   private updateAndGetId(book: Book): Observable<number> {
     return this.bookApi.updateBook(book).pipe(map(() => book.id));
+  }
+
+  private getAndConvertBookById(id: number): Observable<Book> {
+    return this.bookApi.getBookById(id).pipe(
+      map(this.convertBook)
+    );
   }
 
   private convertBook(apiBook: BookApiModel): Book {
