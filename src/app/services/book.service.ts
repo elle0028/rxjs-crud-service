@@ -19,6 +19,7 @@ export class BookService {
   // Update
   private upsertBook$ = new Subject<Book>();
   // delete
+  private deleteBook$ = new Subject<number>();
 
   constructor(private bookApi: BookApiService) {
     this.allBooks$ = this.bookApi
@@ -32,22 +33,24 @@ export class BookService {
         }
         return this.updateAndGetId(book);
       }),
-      mergeMap(id => this.getAndConvertBookById(id))
+      mergeMap((id) => this.getAndConvertBookById(id))
     );
 
-    const newOrGetByIdStream$ = this.currentBookId$.pipe(
+    const newOrGetByIdStream$ = merge(
+      this.currentBookId$,
+      this.deleteBook$.pipe(
+        mergeMap((id) => this.bookApi.deleteBook(id).pipe(map(() => -1)))
+      )
+    ).pipe(
       mergeMap((id) => {
         if (id === -1) {
-          return of(this.getBlankBook())
+          return of(this.getBlankBook());
         }
         return this.getAndConvertBookById(id);
-      }),
+      })
     );
 
-    this.currentBook$ = merge(
-      upsertStream$,
-      newOrGetByIdStream$
-    ).pipe(
+    this.currentBook$ = merge(upsertStream$, newOrGetByIdStream$).pipe(
       tap((book) => console.log('Current', book)),
       shareReplay(1)
     );
@@ -69,6 +72,10 @@ export class BookService {
     this.upsertBook$.next(newBook);
   }
 
+  public deleteCurrentBook(id: number) {
+    this.deleteBook$.next(id);
+  }
+
   private getBlankBook(): Book {
     return {
       id: -1,
@@ -83,9 +90,7 @@ export class BookService {
   }
 
   private getAndConvertBookById(id: number): Observable<Book> {
-    return this.bookApi.getBookById(id).pipe(
-      map(this.convertBook)
-    );
+    return this.bookApi.getBookById(id).pipe(map(this.convertBook));
   }
 
   private convertBook(apiBook: BookApiModel): Book {

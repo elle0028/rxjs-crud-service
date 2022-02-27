@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { allBooks } from '../api/book.api.service';
 import { Book } from '../models/book.model';
 import { BookService } from '../services/book.service';
 
@@ -33,5 +32,9 @@ export class BookEditComponent implements OnInit {
 
   createBook(book: Book) {
     this.bookService.createCurrentBook(book);
+  }
+
+  deleteBook(id: number) {
+    this.bookService.deleteCurrentBook(id);
   }
 }

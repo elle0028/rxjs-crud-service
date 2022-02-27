@@ -10,5 +10,6 @@
     <textarea [(ngModel)]="book.description"></textarea><br />
   </label>
   <button *ngIf="book.id !==  -1"(click)="updateBook(book)">Update</button>
+  <button *ngIf="book.id !==  -1"(click)="deleteBook(book.id)">Delete</button>
   <button *ngIf="book.id ===  -1"(click)="createBook(book)">Create</button>
 </div>
