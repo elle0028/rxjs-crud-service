@@ -1,0 +1,14 @@
+<button (click)="chooseBook()">Random Book</button>
+<button (click)="newBook()">New Book</button>
+<div *ngIf="book">
+  <label>
+    <h3>Title:</h3>
+    <input [(ngModel)]="book.name" /><br />
+  </label>
+  <label>
+    <h3>Description:</h3>
+    <textarea [(ngModel)]="book.description"></textarea><br />
+  </label>
+  <button *ngIf="book.id !==  -1"(click)="updateBook(book)">Update</button>
+  <button *ngIf="book.id ===  -1"(click)="createBook(book)">Create</button>
+</div>
