@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject, merge, pipe, of } from 'rxjs';
-import { map, mergeMap, mergeMapTo, shareReplay, tap } from 'rxjs/operators';
+import {
+  catchError,
+  map,
+  mergeMap,
+  mergeMapTo,
+  shareReplay,
+  tap,
+} from 'rxjs/operators';
 import { BookApiService } from '../api/book.api.service';
 import { BookApiModel } from '../api/models/book.api.model';
 import { Book } from '../models/book.model';
@@ -90,7 +97,15 @@ export class BookService {
   }
 
   private getAndConvertBookById(id: number): Observable<Book> {
-    return this.bookApi.getBookById(id).pipe(map(this.convertBook));
+    return this.bookApi.getBookById(id).pipe(
+      tap((apiBook) => {
+        if (!apiBook) {
+          throw new Error('Book not found');
+        }
+      }),
+      map(this.convertBook)
+      // catchError()
+    );
   }
 
   private convertBook(apiBook: BookApiModel): Book {
