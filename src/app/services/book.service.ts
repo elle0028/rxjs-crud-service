@@ -103,8 +103,10 @@ export class BookService {
           throw new Error('Book not found');
         }
       }),
-      map(this.convertBook)
-      // catchError()
+      map(this.convertBook),
+      catchError(() => {
+        return of(this.getBlankBook());
+      })
     );
   }
 
